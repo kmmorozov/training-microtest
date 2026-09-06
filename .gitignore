@@ -1,0 +1,15 @@
+# Секреты и результаты локальной генерации PKI
+generated/
+**/generated/
+*.key
+*.csr
+*.srl
+*.p12
+*.pfx
+*.ovpn
+
+# Локальные артефакты проверок
+*.log
+*.pcap
+*.tgz
+*.tar.gz

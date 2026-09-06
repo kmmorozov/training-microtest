@@ -1,0 +1,38 @@
+# X и Y замените номерами разных подсетей.
+# 192.168.X.1  — DHCP-сервер/шлюз
+# 192.168.X.53 — DNS
+# 192.168.X.60 — reservation
+# 192.168.Y.0/24 — удаленная сеть
+# Установить как /etc/dhcp/dhcpd.conf только в изолированном L2-сегменте.
+# До запуска: заменить X/Y/MAC, привязать daemon к lab interface и выполнить
+# dhcpd -t -cf /etc/dhcp/dhcpd.conf.
+
+# Объявляем RFC 3442 option 121 как последовательность байтов.
+option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
+# Сервер считается авторитетным для описанной ниже subnet.
+authoritative;
+# Время lease по умолчанию 10 минут; верхняя граница — 1 час.
+default-lease-time 600;
+max-lease-time 3600;
+# Эти параметры получают все клиенты, если subnet/host не переопределяет их.
+option domain-name "example.test";
+option domain-name-servers 192.168.X.53;
+
+subnet 192.168.X.0 netmask 255.255.255.0 {
+    # Dynamic pool не пересекается с server/DNS/reserved addresses.
+    range 192.168.X.100 192.168.X.150;
+    # routers сохраняется для старых клиентов; option 121 ниже также включает
+    # default route, потому что поддерживающий RFC 3442 клиент может игнорировать routers.
+    option routers 192.168.X.1;
+    option subnet-mask 255.255.255.0;
+    # RFC 3442: default route и 192.168.Y.0/24 через 192.168.X.1.
+    option rfc3442-classless-static-routes
+        0, 192, 168, X, 1,
+        24, 192, 168, Y, 192, 168, X, 1;
+}
+
+host reserved-client {
+    # Reservation использует фактический стабильный MAC DHCP-запроса клиента.
+    hardware ethernet <MAC-client-2>;
+    fixed-address 192.168.X.60;
+}

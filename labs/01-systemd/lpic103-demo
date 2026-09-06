@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Учебный foreground-процесс для лабораторной 01.
+# Файл устанавливается как /usr/local/libexec/lpic103-demo с mode 0755.
+# Процесс намеренно не fork/daemonize: systemd должен отслеживать его главный PID.
+set -eu
+
+# Интервал приходит из Environment= unit-файла или его drop-in. Значение 10
+# используется при ручном запуске без переменной окружения.
+interval=${INTERVAL:-10}
+# sleep принимает разные форматы, но лабораторная требует строго положительное
+# целое число секунд. Проверка дает понятную ошибку вместо busy loop.
+case "$interval" in
+    ''|*[!0-9]*) echo "INTERVAL должен быть целым числом секунд" >&2; exit 2 ;;
+esac
+[ "$interval" -gt 0 ] || { echo "INTERVAL должен быть больше нуля" >&2; exit 2; }
+
+# Запись в stdout автоматически попадает в journal выбранного systemd unit.
+# ISO-8601 сохраняет дату, время и UTC offset для сопоставления событий.
+while :; do
+    printf 'lpic103-demo: %s\n' "$(date --iso-8601=seconds)"
+    sleep "$interval"
+done

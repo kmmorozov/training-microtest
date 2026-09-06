@@ -1,0 +1,26 @@
+# X замените номером лабораторной подсети.
+# Установить как /etc/squid/squid.conf после сохранения package config.
+# Порядок http_access критичен: применяется первое совпавшее правило.
+# Listener привязан к lab address, а не ко всем интерфейсам.
+http_port 192.168.X.40:3128
+
+# labnet — единственный разрешенный источник; blocked охватывает домен/поддомены.
+acl labnet src 192.168.X.0/24
+acl blocked dstdomain .blocked.example.test
+acl SSL_ports port 443
+acl Safe_ports port 80 443
+acl CONNECT method CONNECT
+
+# Запрещаем небезопасные destination ports и CONNECT не к TLS/443.
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+# Domain deny обязан находиться до общего разрешения labnet.
+http_access deny blocked
+http_access allow labnet
+# Финальный deny предотвращает open proxy.
+http_access deny all
+
+# access.log связывает client IP, decision/status и destination.
+access_log stdio:/var/log/squid/access.log
+# Кэш отключен, чтобы лабораторная исследовала ACL, а не cache semantics.
+cache deny all

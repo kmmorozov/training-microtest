@@ -1,0 +1,35 @@
+# X, Y — разные номера подсетей: LAN и VPN pool.
+# Установить как /etc/openvpn/server/lpic103.conf после замены placeholders.
+# Профиль OpenVPN 2.6 выдает только один route к LAN, не default gateway.
+# UDP endpoint; firewall разрешает его только внешней учебной subnet.
+port 1194
+proto udp
+# TUN переносит L3 IP packets; topology subnet упрощает адреса/маршруты.
+dev tun
+topology subnet
+# Отдельный VPN pool не должен пересекаться с LAN/external networks.
+server 192.168.Y.0 255.255.255.0
+
+# Absolute PKI paths исключают зависимость от working directory unit.
+ca /etc/openvpn/server/pki/ca.crt
+cert /etc/openvpn/server/pki/server.crt
+key /etc/openvpn/server/pki/server.key
+# Для ECDSA certificate отдельные static DH parameters не нужны.
+dh none
+# tls-crypt шифрует/аутентифицирует control channel общим static key.
+tls-crypt /etc/openvpn/server/pki/tls-crypt.key
+# Анонимный TLS client без сертификата не принимается.
+verify-client-cert require
+
+# Только AEAD data channel; compression отсутствует из-за рисков confidentiality.
+data-ciphers AES-256-GCM:AES-128-GCM:?CHACHA20-POLY1305
+# Клиент получает только route к внутренней лабораторной сети.
+push "route 192.168.X.0 255.255.255.0"
+# Ping/restart обнаруживает потерю peer; persist сохраняет TUN/key при restart.
+keepalive 10 60
+persist-key
+persist-tun
+# UDP client получает exit notification при штатной остановке сервера.
+explicit-exit-notify 1
+# Уровень 3 достаточен для negotiated cipher и ошибок TLS без excessive debug.
+verb 3

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Имитатор работающего сервиса для двухпроходной rsync-миграции.
+# Устанавливается в /usr/local/libexec и пишет только в учебный source каталог.
+set -euo pipefail
+# Foreground loop позволяет systemd корректно отслеживать/останавливать процесс.
+while :; do
+    # Наносекунды помогают доказать, какие события появились между проходами.
+    date --iso-8601=ns >>/srv/lpic103-migrate-src/events.log
+    sleep 1
+done

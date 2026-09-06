@@ -1,0 +1,14 @@
+$TTL 300
+; Обратная зона для 192.168.X.0/24. Имя файла и zone declaration должны
+; содержать тот же X. Serial увеличивается при каждом изменении.
+@   IN SOA ns1.example.test. hostmaster.example.test. (
+        2026090601 3600 900 1209600 300
+)
+    ; Authoritative nameserver этой reverse zone.
+    IN NS ns1.example.test.
+
+; Owner — последний octet; PTR target всегда полный hostname с точкой.
+10  IN PTR app.example.test.
+20  IN PTR files.example.test.
+25  IN PTR mail.example.test.
+53  IN PTR ns1.example.test.

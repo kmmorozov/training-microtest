@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Шаблон ограничения Cockpit TCP/9090 отдельной source-based firewalld zone.
+# Перед запуском замените оба placeholders и сохраните резервную консоль.
+set -euo pipefail
+
+# MANAGEMENT_CIDR — только сеть администраторов; INTERFACE_ZONE — общая зона
+# интерфейса, из которой будет удалено широкое package service cockpit.
+MANAGEMENT_CIDR='192.168.X.0/24'
+INTERFACE_ZONE='<interface-zone>'
+case "$MANAGEMENT_CIDR$INTERFACE_ZONE" in *X*|*'<'*)
+    echo "Замените placeholders в скрипте" >&2; exit 2;;
+esac
+
+# Новую permanent zone создаем идемпотентно: повторный запуск ее не дублирует.
+sudo firewall-cmd --permanent --get-zones | tr ' ' '\n' | grep -qx lpic103-mgmt ||
+    sudo firewall-cmd --permanent --new-zone=lpic103-mgmt
+sudo firewall-cmd --permanent --zone=lpic103-mgmt --add-source="$MANAGEMENT_CIDR"
+# Порт открывается только для источников, попавших в lpic103-mgmt.
+sudo firewall-cmd --permanent --zone=lpic103-mgmt --add-port=9090/tcp
+# Удаляем service=cockpit из общей interface zone, иначе source restriction
+# можно было бы обойти через более широкое разрешение.
+if sudo firewall-cmd --permanent --zone="$INTERFACE_ZONE" --query-service=cockpit; then
+    sudo firewall-cmd --permanent --zone="$INTERFACE_ZONE" --remove-service=cockpit
+fi
+# Одним reload атомарно переводим runtime к подготовленной permanent policy.
+sudo firewall-cmd --reload
+# Итоговый вывод должен содержать management source и ports: 9090/tcp.
+sudo firewall-cmd --zone=lpic103-mgmt --list-all

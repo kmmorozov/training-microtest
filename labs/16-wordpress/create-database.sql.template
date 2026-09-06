@@ -1,0 +1,17 @@
+-- Выполнять в локальном интерактивном `sudo mariadb`, не через shell argv.
+-- Перед запуском заменить пароль; файл с реальным секретом не коммитить.
+-- utf8mb4 поддерживает полный Unicode, включая четырехбайтовые символы.
+CREATE DATABASE lpic103_wp
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- Account действует только при локальном подключении с этого web host.
+CREATE USER 'lpic103_wp'@'localhost'
+  IDENTIFIED BY '<random-database-password>';
+
+-- Права ограничены одной schema; глобальные *.* приложению не выдаются.
+GRANT ALL PRIVILEGES ON lpic103_wp.*
+  TO 'lpic103_wp'@'localhost';
+
+-- Проверка должна показать только lpic103_wp.* и базовый USAGE.
+SHOW GRANTS FOR 'lpic103_wp'@'localhost';

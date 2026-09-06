@@ -1,0 +1,24 @@
+# Преподавательский HTTPS endpoint лабораторной 10.
+# Установить в /etc/systemd/system; приложение — /usr/local/libexec/.
+[Unit]
+Description=LPIC-103 diagnostic HTTPS endpoint
+# Требуется только созданный network stack, не network-online semantics.
+After=network.target
+
+[Service]
+Type=simple
+# SimpleHTTPRequestHandler отдает файлы именно из этого каталога.
+WorkingDirectory=/srv/lpic103-tls
+ExecStart=/usr/local/libexec/lpic103-https-server
+# Пользователь читает key через группу и не получает root privileges.
+User=lpic103-tls
+Group=lpic103-tls
+# Базовые sandbox options ограничивают filesystem и privilege escalation.
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+# Преподаватель может включить стенд в обычную загрузку ВМ.
+WantedBy=multi-user.target

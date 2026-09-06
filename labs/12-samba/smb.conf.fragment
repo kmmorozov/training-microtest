@@ -1,0 +1,20 @@
+# Фрагмент добавляется в /etc/samba/smb.conf после package global settings.
+# До reload выполнить testparm -s; share не использует guest/world access.
+[team]
+    # Единственный публикуемый каталог с owner root и group lpic103-smb.
+    path = /srv/samba/lpic103-team
+    # Ресурс отображается в списке shares.
+    browseable = yes
+    # Разрешение записи дополнительно ограничено UNIX mode/SELinux.
+    read only = no
+    guest ok = no
+    # @ означает Samba/UNIX group; Bob вне группы получает ACCESS_DENIED.
+    valid users = @lpic103-smb
+    # Все новые объекты получают общую project group.
+    force group = lpic103-smb
+    # Masks и forced modes оставляют rw владельцу/группе и запрещают others.
+    create mask = 0660
+    force create mode = 0660
+    directory mask = 2770
+    # setgid 2 наследует group на вложенных каталогах.
+    force directory mode = 2770

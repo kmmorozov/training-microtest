@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Альтернативная UFW-ветка для Cockpit. Не применять вместе с firewalld-скриптом.
+# До ufw enable проверьте SSH_PORT и оставьте резервную административную сессию.
+set -euo pipefail
+
+# Разрешаются SSH и Cockpit только из management subnet.
+MANAGEMENT_CIDR='192.168.X.0/24'
+SSH_PORT='<ssh-port>'
+case "$MANAGEMENT_CIDR$SSH_PORT" in *X*|*'<'*) echo "Замените placeholders" >&2; exit 2;; esac
+
+# Deny-by-default применяется к новым входящим соединениям; исходящие разрешены.
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow from "$MANAGEMENT_CIDR" to any port "$SSH_PORT" proto tcp
+sudo ufw allow from "$MANAGEMENT_CIDR" to any port 9090 proto tcp
+# --force убирает интерактивный prompt; безопасность обеспечена проверками выше.
+sudo ufw --force enable
+# В выводе должны остаться только ожидаемые адресные разрешения.
+sudo ufw status verbose

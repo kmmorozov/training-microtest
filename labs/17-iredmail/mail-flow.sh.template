@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Отправляет одно контролируемое письмо и прослеживает queue ID до Dovecot INBOX.
+# Пароль запрашивается swaks защищенно и не передается в argv/history.
+set -euo pipefail
+
+# Используйте только два выданных учебных mailbox account локального домена.
+MAIL_HOST='mail.example.test'
+SENDER='<sender@example.test>'
+RECIPIENT='<recipient@example.test>'
+case "$SENDER$RECIPIENT" in *'<'*) echo "Подставьте SENDER и RECIPIENT" >&2; exit 2;; esac
+
+# Уникальный Subject позволяет отличить текущую попытку от прежних сообщений.
+test_id="LPIC103-$(date +%s)"
+# Transcript временный и удаляется при любом завершении скрипта.
+transcript=$(mktemp)
+trap 'rm -f "$transcript"' EXIT
+swaks --server "$MAIL_HOST" --port 587 --tls \
+    --auth-user "$SENDER" --auth-password --protect-prompt \
+    --from "$SENDER" --to "$RECIPIENT" \
+    --header "Subject: $test_id" --body "iRedMail delivery path test" |
+    tee "$transcript"
+# Postfix queue ID — основной correlation key для journal.
+queue_id=$(sed -nE 's/.*queued as ([[:alnum:]]+).*/\1/p' "$transcript" | tail -1)
+test -n "$queue_id" || { echo "Queue ID не найден" >&2; exit 1; }
+printf 'TEST_ID=%s QUEUE_ID=%s\n' "$test_id" "$queue_id"
+# Journal подтверждает прием и delivery status; doveadm — наличие именно в INBOX.
+sudo journalctl --since '-10 min' --no-pager | grep "$queue_id"
+sudo doveadm search -u "$RECIPIENT" mailbox INBOX subject "$test_id"
+# После локальной доставки постоянная очередь обычно должна быть пустой.
+postqueue -p

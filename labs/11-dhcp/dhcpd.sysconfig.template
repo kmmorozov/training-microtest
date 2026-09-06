@@ -1,0 +1,4 @@
+# RHEL-like: установить как /etc/sysconfig/dhcpd
+# DHCPDARGS ограничивает broadcast listener одним изолированным интерфейсом.
+# Не подставляйте production/uplink interface.
+DHCPDARGS="<lab-iface>"

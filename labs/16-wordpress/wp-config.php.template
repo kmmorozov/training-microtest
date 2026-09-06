@@ -1,0 +1,36 @@
+<?php
+/*
+ * Шаблон /var/www/lpic103-wp/wp-config.php.
+ * Замените все placeholders, установите root:<web-group> mode 0640 и никогда не
+ * публикуйте реальные DB password/salts в Git или HTTP.
+ */
+// Отдельная database/account ограничивает blast radius приложения.
+define('DB_NAME', 'lpic103_wp');
+define('DB_USER', 'lpic103_wp');
+define('DB_PASSWORD', '<random-database-password>');
+define('DB_HOST', 'localhost');
+define('DB_CHARSET', 'utf8mb4');
+define('DB_COLLATE', '');
+
+/* Уникальные salts создаются офлайн scripts/generate-wordpress-secrets.sh. */
+define('AUTH_KEY',         '<unique-secret>');
+define('SECURE_AUTH_KEY',  '<unique-secret>');
+define('LOGGED_IN_KEY',    '<unique-secret>');
+define('NONCE_KEY',        '<unique-secret>');
+define('AUTH_SALT',        '<unique-secret>');
+define('SECURE_AUTH_SALT', '<unique-secret>');
+define('LOGGED_IN_SALT',   '<unique-secret>');
+define('NONCE_SALT',       '<unique-secret>');
+
+// Префикс должен совпадать с таблицами только этой установки.
+$table_prefix = 'wp_';
+// Запрещаем встроенный web-редактор PHP-файлов и требуем TLS для admin session.
+define('DISALLOW_FILE_EDIT', true);
+define('FORCE_SSL_ADMIN', true);
+define('WP_DEBUG', false);
+
+// Стандартная загрузка WordPress; изменять блок ниже обычно не требуется.
+if (!defined('ABSPATH')) {
+    define('ABSPATH', __DIR__ . '/');
+}
+require_once ABSPATH . 'wp-settings.php';

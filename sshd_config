@@ -1,36 +1,32 @@
-# Базовые настройки  
-Port 22222                          # Нестандартный порт вместо 22  
-ListenAddress 0.0.0.0               # Можно ограничить определённый IP  
-Protocol 2                          # Только SSHv2  
+# Самостоятельный keys-only пример. Перед применением создайте группу ssh-users,
+# добавьте администратора и проверьте вход во второй сессии.
+# Никогда не закрывайте текущую сессию до `sshd -t -f ./sshd_config` и успешного
+# входа в новой. В production предпочтительнее фрагмент sshd_config.d из lab 18.
 
-# Аутентификация  
-PermitRootLogin no                  # Запрет входа под root  
-PasswordAuthentication no           # Только ключи (без паролей)  
-PubkeyAuthentication yes            # Разрешить аутентификацию по ключу  
-AuthorizedKeysFile .ssh/authorized_keys # Путь к ключам  
-
-# Безопасные алгоритмы  
-KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256  
-Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com  
-MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com  
-
-# Ограничения  
-AllowUsers user1 user2              # Только определённые пользователи  
-AllowGroups ssh-users               # Только определённые группы  
-DenyUsers hacker baduser            # Запрещённые пользователи  
-MaxAuthTries 3                      # Макс. попыток ввода  
-LoginGraceTime 1m                   # Время на аутентификацию  
-ClientAliveInterval 300             # Проверка активности (5 мин)  
-ClientAliveCountMax 2               # Макс. неактивных сессий  
-
-# Логи и безопасность  
-UsePAM yes                          # Для 2FA (если нужно)  
-X11Forwarding no                    # Отключить X11  
-PermitEmptyPasswords no             # Запретить пустые пароли  
-PrintMotd no                        # Не показывать сообщение дня  
-DebianBanner no                     # Скрыть версию ОС  
-
-# Защита от DoS  
-MaxStartups 10:30:60                # Лимит одновременных подключений  
-TCPKeepAlive no                     # Уменьшить нагрузку  
-Compression no                      # Отключить сжатие (может быть уязвимость)  
+# Демон слушает стандартный TCP-порт на всех IPv4-адресах; IPv6 здесь отключен.
+Port 22
+AddressFamily any
+ListenAddress 0.0.0.0
+# Root и все парольные/keyboard-interactive входы запрещены: остается public key.
+PermitRootLogin no
+PasswordAuthentication no
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+KbdInteractiveAuthentication no
+# PAM остается включенным для account/session policy дистрибутива.
+UsePAM yes
+# Даже с валидным ключом войдут только участники заранее созданной группы.
+AllowGroups ssh-users
+# Ограничения уменьшают время и число попыток перебора до аутентификации.
+MaxAuthTries 3
+LoginGraceTime 1m
+# Закрывать зависшие соединения после двух пропущенных keepalive по 300 секунд.
+ClientAliveInterval 300
+ClientAliveCountMax 2
+# X11 отключен; TCP forwarding разрешен по сценарию курса — отключите, если не нужен.
+X11Forwarding no
+AllowTcpForwarding yes
+# Начинать вероятностный отказ после 10 неаутентифицированных сессий, полный — при 60.
+MaxStartups 10:30:60
+# Отключение сжатия уменьшает поверхность атак и редко вредит современным сетям.
+Compression no

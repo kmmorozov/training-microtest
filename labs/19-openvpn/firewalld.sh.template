@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Создает OpenVPN ingress rule, source zone VPN pool и forwarding policy к LAN.
+# Замените все placeholders; скрипт меняет permanent firewalld configuration.
+set -euo pipefail
+
+# EXTERNAL_ZONE содержит uplink, LAB_ZONE — интерфейс внутренней сети.
+EXTERNAL_ZONE='<external-zone>'
+LAB_ZONE='<lab-zone>'
+EXTERNAL_CIDR='192.168.Z.0/24'
+VPN_CIDR='192.168.Y.0/24'
+case "$EXTERNAL_ZONE$LAB_ZONE$EXTERNAL_CIDR$VPN_CIDR" in
+    *'<'*|*Y*|*Z*) echo "Подставьте зоны, Y и Z" >&2; exit 2;;
+esac
+
+# UDP/1194 принимается только от внешней учебной subnet, не от всего Интернета.
+sudo firewall-cmd --permanent --zone="$EXTERNAL_ZONE" --add-rich-rule="rule family=\"ipv4\" source address=\"$EXTERNAL_CIDR\" port port=\"1194\" protocol=\"udp\" accept"
+# Source-based zone классифицирует packets по адресу, выданному VPN pool.
+sudo firewall-cmd --permanent --get-zones | tr ' ' '\n' | grep -qx lpic103-vpn ||
+    sudo firewall-cmd --permanent --new-zone=lpic103-vpn
+sudo firewall-cmd --permanent --zone=lpic103-vpn --add-source="$VPN_CIDR"
+# Policy разрешает forwarding только из VPN zone в конкретную lab zone.
+sudo firewall-cmd --permanent --get-policies | tr ' ' '\n' | grep -qx lpic103VpnToLab ||
+    sudo firewall-cmd --permanent --new-policy=lpic103VpnToLab
+sudo firewall-cmd --permanent --policy=lpic103VpnToLab --add-ingress-zone=lpic103-vpn
+sudo firewall-cmd --permanent --policy=lpic103VpnToLab --add-egress-zone="$LAB_ZONE"
+sudo firewall-cmd --permanent --policy=lpic103VpnToLab --set-target=ACCEPT
+# Один reload применяет полностью сформированную permanent policy.
+sudo firewall-cmd --reload
+# Итоговые два вывода используются как протокол приемки.
+sudo firewall-cmd --zone=lpic103-vpn --list-all
+sudo firewall-cmd --info-policy=lpic103VpnToLab

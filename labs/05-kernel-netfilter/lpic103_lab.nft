@@ -1,0 +1,10 @@
+# Отдельная таблица не изменяет существующие firewalld/production tables.
+table inet lpic103_lab {
+    # Base chain подключается к input hook после стандартного filter priority 0.
+    chain input {
+        # policy accept принципиальна: лабораторная только считает, не фильтрует.
+        type filter hook input priority 10; policy accept;
+        # Counter увеличивается для каждого входящего TCP-пакета к учебному 8080.
+        tcp dport 8080 counter comment "LPIC-103 TCP/8080 counter"
+    }
+}

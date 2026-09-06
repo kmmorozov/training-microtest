@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Клиентская позитивная/негативная проверка Squid лабораторной 15.
+# Выполняется с lab client после замены X; конфигурацию proxy не меняет.
+set -euo pipefail
+
+# Явный -x ниже исключает влияние browser/environment proxy settings.
+PROXY='192.168.X.40:3128'
+case "$PROXY" in *X*) echo "Подставьте X" >&2; exit 2;; esac
+
+# Запрашиваем только HTTP status: body не нужен для приемки ACL.
+allowed=$(curl -sS -o /dev/null -w '%{http_code}' -x "http://$PROXY" http://allowed.example.test/)
+blocked=$(curl -sS -o /dev/null -w '%{http_code}' -x "http://$PROXY" http://blocked.example.test/)
+printf 'allowed=%s blocked=%s\n' "$allowed" "$blocked"
+# Allowed принимает redirect как нормальный результат, blocked требует ровно 403.
+case "$allowed" in 2*|3*) ;; *) exit 1;; esac
+[ "$blocked" = 403 ]

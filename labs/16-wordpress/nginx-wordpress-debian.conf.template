@@ -1,0 +1,42 @@
+# Debian/Ubuntu template: установить через sites-available/sites-enabled.
+# Заменить <version> фактической версией socket из /run/php/ и выполнить nginx -t.
+server {
+    # Весь plain HTTP перенаправляется на HTTPS без изменения URI/query.
+    listen 80;
+    server_name wp.example.test;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    # TLS virtual host выбирается по SNI/server_name wp.example.test.
+    listen 443 ssl;
+    server_name wp.example.test;
+    root /var/www/lpic103-wp;
+    index index.php index.html;
+
+    # Закрытый key устанавливается root с mode 0600; certificate — 0644.
+    ssl_certificate /etc/nginx/lpic103-tls/wp.crt;
+    ssl_certificate_key /etc/nginx/lpic103-tls/wp.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    location / {
+        # WordPress front-controller fallback сохраняет arguments.
+        try_files $uri $uri/ /index.php?$args;
+    }
+    location ~ \.php$ {
+        # PHP выполняется только для реально существующего script path.
+        try_files $uri =404;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTPS on;
+        # Debian именует socket по установленной major.minor версии PHP-FPM.
+        fastcgi_pass unix:/run/php/php<version>-fpm.sock;
+    }
+    # Defense in depth для файла DB credentials и dotfiles.
+    location = /wp-config.php { deny all; }
+    location ~ /\. { deny all; }
+
+    # Site-specific access/error logs используются при end-to-end проверке.
+    access_log /var/log/nginx/lpic103-wp.access.log;
+    error_log /var/log/nginx/lpic103-wp.error.log;
+}

@@ -1,0 +1,26 @@
+$TTL 300
+; Прямая authoritative зона example.test. Установить в package zone directory.
+; Точка в конце FQDN запрещает неявное добавление origin зоны.
+@   IN SOA ns1.example.test. hostmaster.example.test. (
+        2026090601 ; serial YYYYMMDDNN; увеличивать при каждом изменении
+        3600       ; refresh
+        900        ; retry
+        1209600    ; expire
+        300        ; negative cache TTL
+)
+    ; NS обязан иметь собственную address record ниже.
+    IN NS ns1.example.test.
+    ; MX указывает на hostname с A/AAAA, а не на CNAME.
+    IN MX 10 mail.example.test.
+
+; Infrastructure hosts курса. X/Z заменить фактическими номерами подсетей.
+ns1     IN A     192.168.X.53
+files   IN A     192.168.X.20
+; www — alias файлового web endpoint.
+www     IN CNAME files
+mail    IN A     192.168.X.25
+app     IN A     192.168.X.10
+wp      IN A     192.168.X.10
+vpn     IN A     192.168.Z.10
+allowed IN A     192.168.X.10
+blocked IN A     192.168.X.10

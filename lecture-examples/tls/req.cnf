@@ -1,0 +1,28 @@
+# Конфигурация запроса на сертификат для демонстрационного HTTPS-сервера.
+# Использование: openssl req -new -key app.key -out app.csr -config req.cnf
+# Имена example.test и адрес 127.0.0.1 предназначены только для учебного стенда.
+[req]
+# Не задавать вопросы интерактивно: поля субъекта берутся из секции [dn].
+prompt = no
+distinguished_name = dn
+# Добавить в CSR расширения из секции [req_ext].
+req_extensions = req_ext
+
+[dn]
+# CN оставлен для совместимости; современные клиенты проверяют прежде всего SAN.
+CN = app.example.test
+O = Microtest Training
+
+[req_ext]
+# Сертификат конечного узла не должен иметь право подписывать другие сертификаты.
+basicConstraints = critical,CA:false
+# Назначения ключа подходят для TLS-сервера с современными алгоритмами обмена.
+keyUsage = critical,digitalSignature,keyAgreement
+extendedKeyUsage = serverAuth
+# Все имена и адреса, по которым открывают сервер, должны присутствовать в SAN.
+subjectAltName = @san
+
+[san]
+DNS.1 = app.example.test
+# Loopback позволяет проверить сертификат локально; в стенде замените IP при необходимости.
+IP.1 = 127.0.0.1

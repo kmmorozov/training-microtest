@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Проверяет общую BIND-конфигурацию и обе согласованные зоны до rndc reload.
+# Не изменяет запущенный named и безопасен для многократного запуска.
+set -euo pipefail
+
+# X — номер /24; ZONE_DIR — фактический каталог zone files выбранной ОС.
+X='<X>'
+ZONE_DIR='<zone-directory>'
+case "$X$ZONE_DIR" in *'<'*) echo "Подставьте X и ZONE_DIR" >&2; exit 2;; esac
+
+# Сначала include graph/options, затем семантика каждой отдельной зоны.
+sudo named-checkconf
+sudo named-checkzone example.test "$ZONE_DIR/db.example.test"
+sudo named-checkzone "$X.168.192.in-addr.arpa" "$ZONE_DIR/db.192.168.$X"
+# Только после трех exit=0 можно выполнять rndc reload.
+echo "Конфигурация и обе зоны: OK. Теперь допустим rndc reload."

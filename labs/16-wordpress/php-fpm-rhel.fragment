@@ -1,0 +1,13 @@
+; Замените совпадающие параметры package pool /etc/php-fpm.d/www.conf.
+; Не добавляйте дубликаты директив: измените существующий pool [www].
+; Worker работает как nginx, поэтому PHP не получает root privileges.
+user = nginx
+group = nginx
+; UNIX socket не публикует FPM в сеть.
+listen = /run/php-fpm/www.sock
+; Owner/group/mode дают доступ master/worker Nginx и закрывают остальных.
+listen.owner = nginx
+listen.group = nginx
+listen.mode = 0660
+; FPM разрешено исполнять только PHP scripts.
+security.limit_extensions = .php

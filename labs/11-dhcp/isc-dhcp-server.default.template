@@ -1,0 +1,5 @@
+# Debian/Ubuntu: установить как /etc/default/isc-dhcp-server
+# INTERFACESv4 ограничивает daemon одним изолированным интерфейсом.
+INTERFACESv4="<lab-iface>"
+# IPv6 DHCP в этой лабораторной не настраивается.
+INTERFACESv6=""

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Клиентская end-to-end проверка DNS → TCP → TLS → HTTP для app:8443.
+# Скопируйте шаблон, задайте доверенный CA_FILE и не заменяйте проверку на -k.
+set -euo pipefail
+
+# HOST одновременно используется DNS, SNI и hostname verification.
+HOST='app.example.test'
+PORT=8443
+CA_FILE='<CA-file>'
+case "$CA_FILE" in *'<'*) echo "Укажите CA_FILE" >&2; exit 2;; esac
+
+# NSS-проверка повторяет resolver path большинства приложений.
+getent ahostsv4 "$HOST"
+# netcat проверяет только возможность TCP connect, еще не TLS/HTTP.
+nc -vz -w 3 "$HOST" "$PORT"
+# s_client отдельно доказывает цепочку CA и совпадение SAN hostname.
+openssl s_client -connect "$HOST:$PORT" -servername "$HOST" \
+    -verify_hostname "$HOST" -CAfile "$CA_FILE" </dev/null 2>&1 |
+    grep 'Verify return code: 0 (ok)'
+# --fail превращает HTTP 4xx/5xx в ненулевой exit status.
+curl --fail --cacert "$CA_FILE" "https://$HOST:$PORT/" -o /dev/null
+echo "DNS, TCP, TLS и HTTP: OK"

@@ -1,0 +1,6 @@
+# X замените номером лабораторной подсети.
+# Установить как /etc/exports.d/lpic103.exports и проверить exportfs -rav.
+# rw разрешает запись, sync подтверждает stable storage до ответа, root_squash
+# отображает client UID 0 в anonymous identity, no_subtree_check исключает
+# ненужную проверку поддерева для отдельного export root.
+/srv/nfs/lpic103-data 192.168.X.0/24(rw,sync,root_squash,no_subtree_check)

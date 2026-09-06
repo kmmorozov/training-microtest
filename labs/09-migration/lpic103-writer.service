@@ -1,0 +1,11 @@
+# Установить как /etc/systemd/system/lpic103-writer.service.
+# Unit не включается в автозапуск: он существует только во время лабораторной.
+[Unit]
+Description=LPIC-103 migration test writer
+
+[Service]
+# Скрипт остается в foreground.
+Type=simple
+ExecStart=/usr/local/libexec/lpic103-writer
+# Перезапуск только при аварии, но не после systemctl stop перед final delta.
+Restart=on-failure

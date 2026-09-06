@@ -1,0 +1,24 @@
+# Установить как /etc/systemd/system/lpic103-demo.service с mode 0644.
+# После изменения: systemd-analyze verify, systemctl daemon-reload, restart.
+[Unit]
+# Человекочитаемое описание отображается в systemctl status.
+Description=LPIC-103 demo service
+# network.target задает порядок, но не обещает внешнюю сетевую доступность.
+After=network.target
+
+[Service]
+# Скрипт остается в foreground, поэтому Type=simple соответствует его поведению.
+Type=simple
+# Отдельная системная учетная запись ограничивает последствия ошибки процесса.
+User=lpic103-demo
+# Базовый интервал переопределяется drop-in без правки этого файла.
+Environment=INTERVAL=10
+# Только абсолютный путь; shell для ExecStart не создается.
+ExecStart=/usr/local/libexec/lpic103-demo
+# Штатное завершение не перезапускается, аварийное — перезапускается через 3 s.
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+# enable подключает службу к обычной многопользовательской загрузке.
+WantedBy=multi-user.target
