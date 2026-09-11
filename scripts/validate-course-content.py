@@ -11,6 +11,19 @@ repo = Path(__file__).resolve().parents[1]
 # Число шагов сверено с исходным руководством v4, а не выведено из самих README.
 expected = [19, 22, 11, 25, 18, 33, 19, 43, 19, 21, 24, 26, 24, 22, 16, 50, 32, 40, 35]
 errors = []
+
+
+def has_step_purpose(body):
+    """Пояснение должно идти до команд и целиком выделяться жирным в Markdown."""
+    # Требуем отдельный первый абзац, а не слово «Зачем» внутри команды или вывода.
+    purpose = re.match(r"\s*\*\*Зачем: ([\s\S]*?)\*\*(?:\n|$)", body)
+    if not purpose:
+        return False
+    explanation = purpose.group(1).strip()
+    # Это структурный барьер от пустых заглушек, не автоматическая оценка смысла.
+    return len(explanation) >= 40 and "```" not in explanation and "\n\n" not in explanation
+
+
 for number, count in enumerate(expected, 1):
     directories = sorted((repo / "labs").glob(f"{number:02d}-*"))
     if len(directories) != 1:
@@ -26,6 +39,16 @@ for number, count in enumerate(expected, 1):
     steps = [int(x) for x in re.findall(r"^## Шаг (\d+)\.", text, re.M)]
     if steps != list(range(1, count + 1)):
         errors.append(f"{lab.name}: нарушено покрытие/порядок {count} шагов")
+    for section in re.split(r"(?=^## Шаг \d+\.)", text, flags=re.M)[1:]:
+        heading, body = section.split("\n", 1)
+        if not has_step_purpose(body):
+            errors.append(f"{lab.name}: {heading}: нет полного жирного пояснения «Зачем» перед командами")
+    # Дополнительные этапы README (включая Kea) соблюдают тот же формат.
+    if (lab / "README.md").is_file():
+        for section in re.split(r"(?=^## )", (lab / "README.md").read_text(), flags=re.M)[1:]:
+            heading, body = section.split("\n", 1)
+            if not has_step_purpose(body):
+                errors.append(f"{lab.name}/README.md: {heading}: нет жирного пояснения «Зачем»")
     # bash -n проверяет только грамматику: ни одна команда из документа не запускается.
     for i, block in enumerate(re.findall(r"```bash\n([\s\S]*?)\n```", text), 1):
         result = subprocess.run(["bash", "-n"], input=block, text=True, capture_output=True)
@@ -69,4 +92,4 @@ for folder in ("labs", "lecture-examples", "scripts"):
 if errors:
     print("\n".join("ERROR: " + x for x in errors), file=sys.stderr)
     raise SystemExit(1)
-print(f"OK: 19 README, {sum(expected)} последовательных шагов, ссылки, Bash/Python и полные файлы")
+print(f"OK: 19 README, {sum(expected)} последовательных шагов с жирными пояснениями, ссылки, Bash/Python и полные файлы")
