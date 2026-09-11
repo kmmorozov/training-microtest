@@ -1,0 +1,28 @@
+# Полный /etc/postfix/main.cf для SMTP-доставки локальным UNIX users.
+# Отдельный лекционный сервер, не SQL backend iRedMail. master.cf находится рядом.
+compatibility_level = 3.6
+myhostname = mail.example.test
+mydomain = example.test
+myorigin = $mydomain
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+inet_interfaces = all
+inet_protocols = ipv4
+# Только localhost может пересылать наружу; чужие destinations запрещены.
+mynetworks = 127.0.0.0/8
+smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination
+# LMTP/SASL в этом минимальном лекционном варианте не используются.
+home_mailbox = Maildir/
+mail_owner = postfix
+setgid_group = postdrop
+queue_directory = /var/spool/postfix
+# aliases.db генерируется newaliases из полного aliases файла ниже.
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+# Входящий SMTP предлагает STARTTLS, локальная доставка работает без relay.
+smtpd_tls_security_level = may
+smtpd_tls_cert_file = /etc/postfix/lpic103-tls/mail.crt
+smtpd_tls_key_file = /etc/postfix/lpic103-tls/mail.key
+smtp_tls_security_level = may
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no

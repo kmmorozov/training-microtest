@@ -1,0 +1,275 @@
+# Лабораторная работа 01. Создание systemd unit и безопасное изменение его конфигурации
+
+[Подготовка, пакеты, полные конфиги и уточнения](README.md) · [Общие материалы и ключи](../../PREPARATION.md)
+
+Ниже все шаги руководства лабораторных v4 от 10.08.2026 с сохраненными
+командами и ожидаемыми результатами. Сначала выполните подготовку в README:
+она определяет адреса, значения переменных и различия ОС. Команды выполняются
+по одной, на указанной машине; альтернативные ветки ОС не выполняются вместе.
+В командах по умолчанию X=10/Y=20/Z=30, lab NIC=enp0s8, зоны internal/external/public.
+Их необходимо сопоставить с реальными NIC/zone по README. Имена unit и web-user
+по умолчанию Rocky; для Debian/Ubuntu используйте соответствия из README.
+Выводы — образцы, а не протокол запуска на вашей ВМ.
+
+Цель лабораторной работы: научиться описывать процесс как systemd service, проверять unit до запуска и контролируемо применять изменение конфигурации.
+
+Стенд: одна изолированная Linux-ВМ с systemd и правами sudo.
+
+Сценарий: в организации появился небольшой внутренний процесс. Его нужно запускать автоматически, перезапускать при сбое и менять локальные параметры без правки поставляемого unit-файла.
+
+Планируемый результат: Unit lpic103-demo.service включен в автозапуск, пишет события в journal, а изменение интервала применено через drop-in.
+
+## Ограничения и безопасность
+
+Важно: не редактируйте пакетные units в /usr/lib/systemd или /lib/systemd.
+
+Важно: до restart сохраните unit и не закрывайте резервную сессию.
+
+## Ход выполнения
+
+## Шаг 1. Создать каталог с заданными правами
+
+Сначала создайте простой foreground-процесс: systemd должен отслеживать главный PID, а не отделившийся daemon. Команда install создает каталог или копирует файл сразу с заданными владельцем и mode: -d выбирает каталог, -m задает права, -o/-g — владельца и группу.
+
+```bash
+sudo install -d -m 0755 /usr/local/libexec
+```
+
+## Шаг 2. Создать исполняемый скрипт /usr/local/libexec/lpic103-demo
+
+```bash
+sudoedit /usr/local/libexec/lpic103-demo
+```
+
+Содержимое редактируемого файла (полный комментированный вариант находится рядом):
+
+```text
+#!/usr/bin/env bash
+set -eu
+interval=${INTERVAL:-10}
+while :; do
+  echo "lpic103-demo: $(date --iso-8601=seconds)"
+  sleep "$interval"
+done
+```
+
+## Шаг 3. Настроить права и атрибуты
+
+```bash
+sudo chmod 0755 /usr/local/libexec/lpic103-demo
+```
+
+## Шаг 4. Проверить foreground-процесс
+
+Запустите процесс в foreground и убедитесь, что он регулярно печатает временную метку; остановите ручную проверку сочетанием Ctrl+C.
+
+```bash
+sudo /usr/local/libexec/lpic103-demo
+```
+
+Ожидаемый вывод и результат:
+
+```text
+lpic103-demo: <YYYY-MM-DD>T<HH:MM:SS><UTC-offset>
+<строка повторяется до остановки по Ctrl+C>
+```
+
+Процесс остается на foreground и печатает время; остановите его Ctrl+C.
+
+## Шаг 5. Создать учетную запись
+
+Unit задает порядок запуска, отдельную учетную запись, команду и политику restart. Измените одну учетную запись или группу; параметры UID/GID, shell и членство определяют будущую модель доступа.
+
+```bash
+getent passwd lpic103-demo >/dev/null || sudo useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin lpic103-demo
+```
+
+## Шаг 6. Изменить конфигурацию /etc/systemd/system/lpic103-demo.service
+
+```bash
+sudoedit /etc/systemd/system/lpic103-demo.service
+```
+
+Содержимое редактируемого файла (полный комментированный вариант находится рядом):
+
+```text
+[Unit]
+Description=LPIC-103 demo service
+After=network.target
+
+[Service]
+Type=simple
+User=lpic103-demo
+Environment=INTERVAL=10
+ExecStart=/usr/local/libexec/lpic103-demo
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## Шаг 7. Проверить синтаксис unit-файла
+
+systemd-analyze verify разбирает unit и его зависимости без запуска службы. Пустой вывод и код завершения 0 означают, что синтаксических ошибок не найдено.
+
+```bash
+sudo systemd-analyze verify lpic103-demo.service
+```
+
+Ожидаемый вывод и результат:
+
+```text
+Команда не сообщает синтаксических ошибок и завершается с exit status = 0.
+```
+
+## Шаг 8. Перечитать unit-файлы systemd
+
+```bash
+sudo systemctl daemon-reload
+```
+
+## Шаг 9. Включить автозапуск службы
+
+```bash
+sudo systemctl enable --now lpic103-demo.service
+```
+
+Ожидаемый вывод и результат:
+
+```text
+Created symlink ... (при первом включении); exit status = 0
+```
+
+systemctl is-enabled возвращает enabled.
+
+systemctl is-active возвращает active.
+
+## Шаг 10. Проверить состояние службы
+
+Статус показывает жизненный цикл службы. Его нужно сопоставить с итоговым unit-файлом, MainPID и свежими сообщениями journal.
+
+```bash
+systemctl status lpic103-demo.service --no-pager
+```
+
+Ожидаемый вывод и результат:
+
+```text
+Active: active (running) ...
+Loaded: loaded (...)
+```
+
+## Шаг 11. Показать итоговый unit-файл
+
+```bash
+systemctl cat lpic103-demo.service
+```
+
+Ожидаемый вывод и результат:
+
+```text
+# <основной unit-файл>
+# <drop-in-файлы>
+[Unit] ...
+[Service] ...
+```
+
+## Шаг 12. Показать свойства unit
+
+```bash
+systemctl show lpic103-demo.service -p MainPID -p User -p Restart
+```
+
+Ожидаемый вывод и результат:
+
+```text
+MainPID=<PID>
+User=lpic103-demo
+Restart=on-failure
+```
+
+## Шаг 13. Просмотреть журнал службы
+
+Выберите журнал нужного unit и ограничьте временной диапазон, чтобы связать сообщение с только что выполненным действием.
+
+```bash
+journalctl -u lpic103-demo.service --since '-2 min' --no-pager
+```
+
+Ожидаемый вывод и результат:
+
+```text
+... <unit>[PID]: <сообщение, относящееся к текущему действию> ...
+```
+
+В журнале есть не менее двух сообщений lpic103-demo.
+
+## Шаг 14. Изменить конфигурацию lpic103-demo.service
+
+Локальную поправку храните отдельно от основного unit. Пустая Environment= сбрасывает прежний список перед новым значением.
+
+```bash
+sudo systemctl edit lpic103-demo.service
+```
+
+Полное содержимое drop-in:
+
+```ini
+[Service]
+Environment=
+Environment=INTERVAL=3
+```
+
+## Шаг 15. Проверить синтаксис unit-файла
+
+```bash
+sudo systemd-analyze verify lpic103-demo.service
+```
+
+Ожидаемый вывод и результат:
+
+```text
+Команда не сообщает синтаксических ошибок и завершается с exit status = 0.
+```
+
+## Шаг 16. Перечитать unit-файлы systemd
+
+```bash
+sudo systemctl daemon-reload
+```
+
+## Шаг 17. Запустить или перезапустить службу
+
+```bash
+sudo systemctl restart lpic103-demo.service
+```
+
+## Шаг 18. Показать итоговый unit-файл
+
+```bash
+systemctl cat lpic103-demo.service
+```
+
+Ожидаемый вывод и результат:
+
+```text
+# <основной unit-файл>
+# <drop-in-файлы>
+[Unit] ...
+[Service] ...
+```
+
+## Шаг 19. Просмотреть журнал службы
+
+```bash
+journalctl -u lpic103-demo.service --since '-30 sec' --no-pager
+```
+
+Ожидаемый вывод и результат:
+
+```text
+... <unit>[PID]: <сообщение, относящееся к текущему действию> ...
+```
+
+Интервал между новыми сообщениями близок к 3 секундам.

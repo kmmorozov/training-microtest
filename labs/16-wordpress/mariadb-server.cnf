@@ -1,0 +1,10 @@
+# Полный локальный файл сервера /etc/my.cnf.d/lpic103.cnf (Rocky)
+# или /etc/mysql/mariadb.conf.d/90-lpic103.cnf (Debian/Ubuntu).
+# Пакетный main config включает каталог; системные пути socket/pid сохраняются.
+[mariadb]
+# WordPress работает на той же ВМ: TCP извне не нужен.
+bind-address = 127.0.0.1
+# База приложения создается с этой кодировкой; размер учебного buffer pool — 128M.
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+innodb-buffer-pool-size = 128M

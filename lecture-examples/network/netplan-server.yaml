@@ -1,0 +1,19 @@
+# Полный Netplan файл для учебной Ubuntu Server ВМ с двумя NIC.
+# Имена NIC заменить по ip -br link; не применять удаленно без резервной консоли.
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s3:
+      # Management/NAT сохраняет свой DHCP DNS и default route для скачивания.
+      dhcp4: true
+      dhcp6: false
+    enp0s8:
+      # Изолированный lab NIC: не назначаем ему default route.
+      dhcp4: false
+      dhcp6: false
+      addresses:
+        - 192.168.10.10/24
+      # DNS lab14 authoritative-only: Internet resolver остается на management.
+      # Для временных учебных имен используйте /etc/hosts либо split DNS.
+      optional: true

@@ -1,0 +1,9 @@
+# Полный automount-unit: сеть монтируется при первом обращении к /mnt/data.
+# Активируйте именно этот unit, соответствующий .mount стартует автоматически.
+[Unit]
+Description=LPIC103 NFS automount
+[Automount]
+Where=/mnt/data
+TimeoutIdleSec=60
+[Install]
+WantedBy=multi-user.target

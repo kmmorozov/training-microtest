@@ -1,0 +1,13 @@
+# Полный unit для /mnt/data: имя unit обязано соответствовать mountpoint.
+# Сервер lab13 экспортирует каталог, TCP2049 доступен с клиента.
+[Unit]
+Description=LPIC103 NFSv4 data
+After=network-online.target
+Wants=network-online.target
+[Mount]
+What=192.168.10.20:/srv/nfs/lpic103-data
+Where=/mnt/data
+Type=nfs4
+# hard повторяет I/O при сбое сервера; не подменяет отказ поврежденными данными.
+Options=vers=4.2,hard
+TimeoutSec=30

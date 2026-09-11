@@ -383,6 +383,45 @@ sudo timeout 15 tcpdump -l -ni any -c 20 'host 192.0.2.100 and tcp port 8443'
 
 ## 7. DHCP, NetworkManager и PAM
 
+### Rocky Linux 10: Kea вместо dhcpd
+
+Полный сценарий и готовый конфиг: [лабораторная 11](labs/11-dhcp/README.md).
+ISC DHCP в старой лекции относится к другой версии ОС. На Rocky10
+`dnf install dhcp-server` не является корректным способом установки.
+
+```bash
+sudo dnf install -y kea
+rpm -q kea
+kea-dhcp4 -V
+sudo kea-dhcp4 -t /etc/kea/kea-dhcp4.conf
+sudo systemctl enable --now kea-dhcp4
+sudo journalctl -u kea-dhcp4 --since '-5 min' --no-pager
+sudo tcpdump -ni enp0s8 -vvv 'udp port 67 or udp port 68'
+nmcli -f GENERAL,IP4,DHCP4 device show enp0s8
+ip route get 192.168.20.10
+sudo tail -n 10 /var/lib/kea/kea-leases4.csv
+```
+
+| Команда/ключ | Что означает и что увидеть |
+|---|---|
+| `dnf install kea` | Пакет из штатного repo; проверенный Rocky10.2 использовал BaseOS |
+| `rpm -q`, `-V` | Версия RPM и сведения сборки daemon; фиксируются в отчете |
+| `-t FILE` | Parser/семантика и наличие NIC; не запускает DHCP; нужен exit0 |
+| `enable --now` | Автозапуск и запуск сейчас; is-active затем active |
+| `journalctl -u` | Выбор только DHCPv4 unit; CONFIG_LOAD_FAIL означает ошибку старта |
+| `tcpdump -vvv` | Подробный DORA и DHCP options, включая server ID и option121 |
+| `nmcli ... DHCP4` | Полученные адрес, DNS, lease time и classless routes |
+| `ip route get` | Реальное решение маршрутизации к указанному узлу |
+| `tail CSV` | Последние записи истории аренды; повторный IP не равен двум клиентам |
+
+Характерный успешный результат: адрес .100–.150 либо reservation .60,
+DNS .53, lease600, маршрут 192.168.20.0/24 через .1.
+При raw sockets отсутствие обычного UDP listener в `ss` не заменяет
+проверку tcpdump/клиента. Файл Kea — JSON с комментариями, валидируйте его
+kea-dhcp4, а не jq. После неверного NIC `-t` сообщает `interface ... not present`.
+
+### ISC DHCP: Rocky9 / Ubuntu24.04
+
 ```bash
 sudo dhcpd -t -cf /etc/dhcp/dhcpd.conf
 sudo ss -lunp 'sport = :67'

@@ -1,117 +1,57 @@
-# Карта материалов лабораторных работ
+# Все лабораторные: подготовка и полный разбор
 
-Здесь указано, куда устанавливать файлы и чем проверять их до применения.
-Команды package manager выполняйте только для семейства своей ОС.
+В каждом каталоге README описывает пакеты, происхождение материалов/ключей,
+установку полных файлов, различия ОС, приемку и откат. WALKTHROUGH содержит
+все нумерованные шаги, команды и характерные выводы исходного руководства.
+Всего **19 лабораторных и 499 шагов**. Сначала [общая подготовка](../PREPARATION.md).
 
-## 01 — systemd
+| № | Подготовка и полные конфиги | Команды и вывод |
+|---|---|---|
+| 01 | [Создание systemd unit и безопасное изменение его конфигурации ](01-systemd/README.md) | [19 шагов](01-systemd/WALKTHROUGH.md) |
+| 02 | [Контролируемая сборка iperf3 из исходного кода ](02-source-build/README.md) | [22 шагов](02-source-build/WALKTHROUGH.md) |
+| 03 | [Ограничение ресурсов сервиса через systemd и cgroups ](03-cgroups/README.md) | [11 шагов](03-cgroups/WALKTHROUGH.md) |
+| 04 | [Базовый запуск Cockpit и ограничение административного доступа ](04-cockpit/README.md) | [25 шагов](04-cockpit/WALKTHROUGH.md) |
+| 05 | [Модуль ядра, conntrack и счетчик netfilter ](05-kernel-netfilter/README.md) | [18 шагов](05-kernel-netfilter/WALKTHROUGH.md) |
+| 06 | [Каталоги сервиса, UNIX-права, ACL и специальные атрибуты ](06-filesystem-acl/README.md) | [33 шагов](06-filesystem-acl/WALKTHROUGH.md) |
+| 07 | [RAID1 с hot spare, отказ диска и rebuild ](07-raid/README.md) | [19 шагов](07-raid/WALKTHROUGH.md) |
+| 08 | [LVM для сервисных данных: расширение, snapshot и thin provisioning ](08-lvm/README.md) | [43 шагов](08-lvm/WALKTHROUGH.md) |
+| 09 | [Миграция сервисных данных с коротким окном остановки ](09-migration/README.md) | [19 шагов](09-migration/WALKTHROUGH.md) |
+| 10 | [Послойная диагностика недоступного сетевого сервиса ](10-network-diagnostics/README.md) | [21 шагов](10-network-diagnostics/WALKTHROUGH.md) |
+| 11 | [DHCP: пул, reservation, classless route и проверка клиента ](11-dhcp/README.md) | [24 шагов](11-dhcp/WALKTHROUGH.md) |
+| 12 | [Базовый файловый ресурс Samba с групповой моделью доступа ](12-samba/README.md) | [26 шагов](12-samba/WALKTHROUGH.md) |
+| 13 | [NFSv4 export с root_squash и согласованными UID/GID ](13-nfs/README.md) | [24 шагов](13-nfs/WALKTHROUGH.md) |
+| 14 | [Авторитетный BIND: прямая и обратная зона ](14-bind/README.md) | [22 шагов](14-bind/WALKTHROUGH.md) |
+| 15 | [Forward proxy Squid: ACL, запрет домена и журнал запроса ](15-squid/README.md) | [16 шагов](15-squid/WALKTHROUGH.md) |
+| 16 | [Nginx, PHP-FPM, MariaDB и WordPress ](16-wordpress/README.md) | [50 шагов](16-wordpress/WALKTHROUGH.md) |
+| 17 | [Диагностика готового почтового комплекса iRedMail ](17-iredmail/README.md) | [32 шагов](17-iredmail/WALKTHROUGH.md) |
+| 18 | [Защита SSH: сертификат, FIDO2 и TOTP ](18-ssh-hardening/README.md) | [40 шагов](18-ssh-hardening/WALKTHROUGH.md) |
+| 19 | [OpenVPN 2.6: защищенный маршрут к лабораторной сети ](19-openvpn/README.md) | [35 шагов](19-openvpn/WALKTHROUGH.md) |
 
-- `lpic103-demo` → `/usr/local/libexec/lpic103-demo`, mode 0755.
-- service → `/etc/systemd/system/lpic103-demo.service`, mode 0644.
-- override → `/etc/systemd/system/lpic103-demo.service.d/override.conf`.
-- `install.sh` создает user, копирует файлы, выполняет verify и запускает unit.
+## Приоритет исправленных инструкций
 
-## 02 — iperf3 из исходников
+Rocky 10 DHCP: **Kea**, а не dhcpd. README lab11 полностью заменяет ISC-серверные
+шаги исходного упражнения; для Rocky9/Ubuntu24.04 отдельная ISC-ветка.
 
-`build-iperf3.sh ARCHIVE SHA256SUMS` проверяет checksum, показывает содержимое,
-собирает и запускает tests без root. `make install` оставлен отдельным осознанным
-шагом после просмотра `config.log`.
+Samba: smb.conf устанавливается целиком. BIND: один named.conf со всеми зонами,
+два полных zone-файла и локально созданный rndc.key. WordPress: полный
+nginx.conf (отдельные HTTP/TLS), php-fpm.conf с pool и сгенерированные полные
+SQL/wp-config.php. SSH: полные sshd_config для CA/MFA и полные PAM по ОС.
 
-## 03 — cgroup v2
+iRedMail: готовый комплект создается установщиком; README содержит точный
+источник, выборы мастера, создание аккаунтов и экспорт всех реальных конфигов.
+Архив с SQL-паролями/TLS-ключами хранится закрыто, Git содержит генератор
+и инструкции, не общие для всех слушателей действующие private keys.
 
-`run-limited-load.sh` проверяет cgroup2 и запускает только transient unit
-`lpic103-load.service` с CPUQuota/MemoryHigh/MemoryMax/TasksMax.
+## Порядок использования
 
-## 04 — Cockpit
+1. Выберите отдельную ВМ/роль и установите пакеты своей ОС по README.
+2. Получите файлы из этого репозитория, архивы — по указанным официальным URL.
+3. Создайте/получите только необходимые ключи согласно PREPARATION.
+4. Скопируйте **полный** файл из выбранного варианта, замените адреса своей схемы.
+5. Проверьте синтаксис штатной программой, примените и выполните проверки WALKTHROUGH.
+6. Сохраните отчет: версии, effective config без секретов, positive/negative результат.
 
-После запуска `cockpit.socket` выберите **один** шаблон: firewalld или UFW.
-Подставьте management CIDR и не закрывайте резервную административную сессию.
-
-## 05 — модуль и netfilter
-
-- modules-load файл → `/etc/modules-load.d/lpic103-dummy.conf`;
-- modprobe файл → `/etc/modprobe.d/lpic103-dummy.conf`;
-- `nft -c -f lpic103_lab.nft` — dry validation;
-- `nft -f ...` создает отдельную policy-accept таблицу только со счетчиком 8080.
-
-## 06 — права и ACL
-
-`sudo setup.sh` создает только `/srv/lpic103-app` и учебные identities. Для очистки
-сначала снимите append-only атрибут с `audit.log`; не применяйте рекурсивные
-команды к `/srv` целиком.
-
-## 07 и 08 — storage
-
-Запускаются только read-only `preflight.sh` с тремя явными devices. Разрушительные
-`mdadm --create`, `mkfs`, `pvcreate` и `lvcreate` оставлены в `COMMANDS.md` внутри
-соответствующего каталога и выполняются вручную после сверки MODEL/SERIAL.
-
-## 09 — миграция
-
-Writer устанавливается в `/usr/local/libexec/`, service — в `/etc/systemd/system/`.
-`migrate.sh` принимает только учебную пару каталогов, сначала показывает dry-run
-и требует `YES`. Финальная delta, checksum/ACL diff и bind switch выполняются в
-окне остановки по руководству.
-
-## 10 — диагностический TLS endpoint
-
-Сначала `scripts/generate-lab-pki.sh`, затем преподаватель выполняет
-`sudo setup-server.sh ../../generated/pki`. Клиент адаптирует
-`check-endpoint.sh.template`. Упражнение содержит ровно один документированный
-дефект.
-
-## 11 — DHCP
-
-После замены X/Y/MAC скопируйте конфиг в `/etc/dhcp/dhcpd.conf` и проверьте
-`dhcpd -t -cf ...`. Выберите platform-файл `/etc/sysconfig/dhcpd` или
-`/etc/default/isc-dhcp-server`. До start UDP/67 должен быть свободен.
-
-## 12 — Samba
-
-`setup-share.sh` создает UNIX identities/каталог/SELinux context. Добавьте fragment
-в `/etc/samba/smb.conf`, выполните `testparm -s`, отдельно задайте Samba passwords
-для Alice и Bob. Проверяются allow Alice и deny Bob.
-
-## 13 — NFS
-
-`setup-identity.sh` выполняется на сервере и клиенте; UID/GID обязаны совпасть.
-Exports template → `/etc/exports.d/lpic103.exports`; после замены X выполните
-`exportfs -rav`. Клиент монтирует NFSv4 и проверяет user write/root_squash deny.
-
-## 14 — BIND
-
-- options fragment вставляется в существующий `options {}`;
-- zones fragment выбирается по ОС;
-- zone files устанавливаются в package directory с корректным owner/SELinux;
-- перед `rndc reload`: `named-checkconf` и два `named-checkzone`.
-
-Не забудьте заменить X/Z и увеличить serial после изменения.
-
-## 15 — Squid
-
-После подстановки X установите template как `/etc/squid/squid.conf`. Выполните
-`squid -k parse`, затем reconfigure. `check-proxy.sh` ожидает 2xx/3xx для allowed и
-403 для blocked; listener не должен быть доступен вне labnet.
-
-## 16 — WordPress
-
-Следуйте локальному README: verified archive → root-owned code → writable uploads
-→ отдельная DB/user → защищенный wp-config → platform Nginx/FPM → TLS. Пароли и
-salts в Git не сохраняются.
-
-## 17 — iRedMail
-
-Адаптируйте два шаблона. Первый не изменяет систему и проверяет зависимости,
-listeners, effective Postfix/Dovecot и TLS. Второй отправляет одно письмо, извлекает
-queue ID и ищет Subject в INBOX. Инсталлятор iRedMail повторно не запускается.
-
-## 18 — SSH
-
-CA создается на offline host; на сервер передается только `.pub`. Применение:
-CA drop-in → отдельный вход → FIDO2 → отдельный вход → PAM/TOTP → два входа →
-hardening. Перед каждым reload: резервная сессия, `sshd -t`, `sshd -T`.
-
-## 19 — OpenVPN
-
-Следуйте локальному README. Сервер/client profiles, sysctl и firewalld template
-соответствуют OpenVPN 2.6, не включают compression/default route и выдают только
-маршрут к LAN. Проверяются EKU/name, negotiated AEAD cipher, tun address и route.
+Шаблон .template может быть полным конфигом с параметрами стенда; это не
+недостающий fragment. Значения X=10/Y=20/Z=30, enp0s8 и internal/public/external
+в примерах не гарантируют совпадение с вашей ВМ. Проверяйте ip/nmcli/firewall-cmd.
+Блоки вывода в WALKTHROUGH иллюстративны; их не вводят в shell.

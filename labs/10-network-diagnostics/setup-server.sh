@@ -24,6 +24,7 @@ install -m 0644 "$pki/app.crt" /etc/lpic103-tls/server.crt
 install -o root -g lpic103-tls -m 0640 "$pki/app.key" /etc/lpic103-tls/server.key
 # Приложение и статический ответ не должны быть изменяемы service user.
 install -o root -g lpic103-tls -m 0644 "$src/index.html" /srv/lpic103-tls/index.html
+install -d -m 0755 /usr/local/libexec
 install -m 0755 "$src/https-server.py" /usr/local/libexec/lpic103-https-server
 install -m 0644 "$src/lpic103-tls.service" /etc/systemd/system/lpic103-tls.service
 # Сначала verify, затем daemon-reload/start и фактический socket check.

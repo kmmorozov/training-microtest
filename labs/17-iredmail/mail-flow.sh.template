@@ -5,9 +5,11 @@ set -euo pipefail
 
 # Используйте только два выданных учебных mailbox account локального домена.
 MAIL_HOST='mail.example.test'
+CA_FILE='<CA-file>'
 SENDER='<sender@example.test>'
 RECIPIENT='<recipient@example.test>'
-case "$SENDER$RECIPIENT" in *'<'*) echo "Подставьте SENDER и RECIPIENT" >&2; exit 2;; esac
+case "$SENDER$RECIPIENT$CA_FILE" in *'<'*) echo "Подставьте SENDER, RECIPIENT и CA_FILE" >&2; exit 2;; esac
+[ -r "$CA_FILE" ] || { echo "Не читается CA_FILE" >&2; exit 2; }
 
 # Уникальный Subject позволяет отличить текущую попытку от прежних сообщений.
 test_id="LPIC103-$(date +%s)"
@@ -15,6 +17,7 @@ test_id="LPIC103-$(date +%s)"
 transcript=$(mktemp)
 trap 'rm -f "$transcript"' EXIT
 swaks --server "$MAIL_HOST" --port 587 --tls \
+    --tls-verify --tls-ca-file "$CA_FILE" --auth-hide-password \
     --auth-user "$SENDER" --auth-password --protect-prompt \
     --from "$SENDER" --to "$RECIPIENT" \
     --header "Subject: $test_id" --body "iRedMail delivery path test" |

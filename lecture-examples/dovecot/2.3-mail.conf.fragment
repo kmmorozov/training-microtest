@@ -1,8 +1,0 @@
-# Только для Dovecot 2.3; подтвердить ветку через dovecot --version.
-# Фрагмент включает IMAP, Maildir в home и обязательный TLS.
-protocols = imap
-mail_location = maildir:~/Maildir
-ssl = required
-# Символ < означает: прочитать PEM-содержимое из указанного файла (syntax 2.3).
-ssl_cert = </etc/dovecot/private/fullchain.pem
-ssl_key = </etc/dovecot/private/server.key

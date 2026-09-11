@@ -1,0 +1,4 @@
+# Полный /etc/aliases только для отдельной учебной ВМ с пользователем labmail.
+# После установки выполните newaliases; не заменять aliases production-сервера.
+postmaster: root
+root: labmail

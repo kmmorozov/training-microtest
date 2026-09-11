@@ -22,5 +22,5 @@ if command -v getenforce >/dev/null && [ "$(getenforce)" = Enforcing ]; then
 fi
 
 # Пароли запрашиваются интерактивно и не попадают в argv/history этого скрипта.
-echo "Добавьте smb.conf.fragment в /etc/samba/smb.conf и выполните testparm -s."
+echo "Установите полный smb.conf как /etc/samba/smb.conf и выполните testparm -s."
 echo "Затем создайте отдельные Samba-пароли: smbpasswd -a lpic103-alice; smbpasswd -a lpic103-bob"

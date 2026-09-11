@@ -1,0 +1,18 @@
+# Полный /etc/pam.d/sshd для Rocky Linux с authselect-managed password-auth.
+# Меняет только SSH: PAM auth требует TOTP после SSH publickey authentication.
+#%PAM-1.0
+auth       required     pam_google_authenticator.so
+# account проверяет блокировки/срок действия; парольный auth substack не включаем.
+account    required     pam_sepermit.so
+account    required     pam_nologin.so
+account    include      password-auth
+# Смена просроченного пароля и session остаются в политике дистрибутива.
+password   include      password-auth
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+session    required     pam_selinux.so open env_params
+session    required     pam_namespace.so
+session    optional     pam_keyinit.so force revoke
+session    optional     pam_motd.so
+session    include      password-auth
+session    include      postlogin

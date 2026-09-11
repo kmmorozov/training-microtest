@@ -1,4 +1,0 @@
-# После ручной проверки mount. _netdev + automount не задерживают boot.
-# hard повторяет I/O при временной потере server вместо тихого повреждения данных;
-# source path обязан точно совпадать с опубликованным export.
-server:/srv/nfs/data /mnt/data nfs4 hard,_netdev,x-systemd.automount 0 0

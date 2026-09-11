@@ -31,7 +31,7 @@ while IFS= read -r file; do
         echo "ERROR: нет executable bit у файла с shebang: $file" >&2
         fail=1
     fi
-done < <(rg -l '^#!' labs lecture-examples scripts firewalld.sh iptables.sh | sort)
+done < <(rg -l '^#!' --glob '!*.md' labs lecture-examples scripts firewalld.sh iptables.sh | sort)
 
 # ast.parse проверяет Python без создания __pycache__ в рабочем дереве.
 if ! python3 -c 'import ast; ast.parse(open("labs/10-network-diagnostics/https-server.py", encoding="utf-8").read())'; then
@@ -77,12 +77,16 @@ fi
 
 # Минимальный manifest защищает от случайного удаления ключевых материалов.
 required=(
-    README.md COMMANDS.md STAND.md
+    README.md COMMANDS.md STAND.md PREPARATION.md
     labs/01-systemd/lpic103-demo.service
     labs/10-network-diagnostics/lpic103-tls.service
     labs/11-dhcp/dhcpd.conf.template
     labs/14-bind/db.example.test.template
-    labs/16-wordpress/nginx-wordpress-rhel.conf
+    labs/16-wordpress/nginx-rhel-tls.conf
+    labs/16-wordpress/php-fpm-rhel.conf
+    labs/11-dhcp/kea-dhcp4.conf
+    labs/12-samba/smb.conf
+    labs/14-bind/named-rhel.conf
     labs/18-ssh-hardening/65-lpic103-mfa.conf
     labs/19-openvpn/server-lpic103.conf.template
     scripts/generate-lab-pki.sh
@@ -92,6 +96,9 @@ for file in "${required[@]}"; do
 done
 
 # Ненулевой status агрегируется, чтобы один запуск показал максимум проблем.
+if ! python3 scripts/validate-course-content.py; then
+    fail=1
+fi
 if [ "$fail" -ne 0 ]; then
     exit 1
 fi

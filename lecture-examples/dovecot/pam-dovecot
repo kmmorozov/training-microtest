@@ -1,0 +1,4 @@
+# Полный /etc/pam.d/dovecot для демонстрационных локальных UNIX accounts.
+# PAM проверяет password/account, userdb passwd получает UID/GID/home.
+auth    required pam_unix.so
+account required pam_unix.so

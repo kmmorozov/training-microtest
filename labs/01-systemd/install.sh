@@ -15,7 +15,7 @@ install -d -m 0755 /usr/local/libexec /etc/systemd/system/lpic103-demo.service.d
 # install одновременно копирует файл и задает предсказуемый mode.
 install -m 0755 "$src_dir/lpic103-demo" /usr/local/libexec/lpic103-demo
 install -m 0644 "$src_dir/lpic103-demo.service" /etc/systemd/system/lpic103-demo.service
-install -m 0644 "$src_dir/override.conf" /etc/systemd/system/lpic103-demo.service.d/override.conf
+# Drop-in устанавливается отдельным вторым этапом README, чтобы видеть 10s → 3s.
 # Синтаксис и ссылки проверяются до загрузки определения в PID 1.
 systemd-analyze verify /etc/systemd/system/lpic103-demo.service
 # daemon-reload перечитывает units, но сам по себе не запускает процесс.

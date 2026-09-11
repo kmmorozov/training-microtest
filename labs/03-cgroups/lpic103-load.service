@@ -1,0 +1,16 @@
+# Полный постоянный аналог transient unit; установить в /etc/systemd/system/.
+# Не запускать одновременно со скриптом, использующим то же unit name.
+[Unit]
+Description=LPIC103 bounded CPU and memory load
+[Service]
+Type=exec
+# CPUQuota задается относительно одного ядра.
+CPUQuota=25%
+MemoryHigh=192M
+MemoryMax=256M
+TasksMax=32
+ExecStart=/usr/bin/stress-ng --cpu 2 --vm 1 --vm-bytes 128M --timeout 90s
+# Не перезапускать нагрузку бесконечно после завершения упражнения.
+Restart=no
+[Install]
+WantedBy=multi-user.target

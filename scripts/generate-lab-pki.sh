@@ -6,10 +6,19 @@ set -euo pipefail
 
 # Default generated/ исключен из Git; можно передать отдельный закрытый каталог.
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+# TLS-only не требует OpenVPN: лабораторные HTTPS независимы от VPN-пакета.
+tls_only=false
+if [ "${1:-}" = --tls-only ]; then
+    tls_only=true
+    shift
+fi
+[ "$#" -le 1 ] || { echo "Использование: $0 [--tls-only] [новый-каталог]" >&2; exit 2; }
 out=${1:-"$script_dir/../generated/pki"}
 command -v openssl >/dev/null || { echo "Требуется openssl" >&2; exit 1; }
 # openvpn CLI нужен для корректного формата static key, его не заменяем openssl rand.
-command -v openvpn >/dev/null || { echo "Требуется OpenVPN для tls-crypt.key" >&2; exit 1; }
+if ! "$tls_only"; then
+    command -v openvpn >/dev/null || { echo "Требуется OpenVPN либо --tls-only" >&2; exit 1; }
+fi
 
 # Каталог закрыт mode 0700. Непустой каталог никогда не перезаписывается.
 install -d -m 0700 "$out"
@@ -65,8 +74,10 @@ issue_leaf server vpn.example.test serverAuth 'DNS:vpn.example.test'
 # OpenVPN client certificate имеет отдельный clientAuth EKU.
 issue_leaf client client1 clientAuth 'DNS:client1'
 # Static key защищает/скрывает control channel, но не заменяет certificate PKI.
-openvpn --genkey secret "$out/tls-crypt.key"
-[ -s "$out/tls-crypt.key" ] || { echo "OpenVPN не создал tls-crypt.key" >&2; exit 1; }
+if ! "$tls_only"; then
+    openvpn --genkey secret "$out/tls-crypt.key"
+    [ -s "$out/tls-crypt.key" ] || { echo "OpenVPN не создал tls-crypt.key" >&2; exit 1; }
+fi
 
 # Явно разделяем permissions public certificates и всех private/static keys.
 chmod 0600 "$out"/*.key

@@ -1,9 +1,0 @@
-# Фрагмент /etc/webmin/miniserv.conf для прямого management-доступа.
-# Не заменяет полный package config. Проверить unit/listener и сохранить консоль.
-# TCP/10000 — стандартный embedded Webmin listener в лекционном примере.
-port=10000
-listen=10000
-# Включает TLS; отдельно установите доверенный certificate/key.
-ssl=1
-# Разрешены только loopback и management documentation subnet.
-allow=127.0.0.1 192.0.2.0/24
